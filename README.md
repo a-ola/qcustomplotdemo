@@ -12,6 +12,9 @@ Install the QT5 development packages:
 ```
 apt-get install qtdeclarative5-dev-tools
 apt-get install libqcustomplot-dev
+
+### To enable 'sensors command':
+apt-get install lm-sensors
 ```
 
 ## Build it

@@ -13,6 +13,10 @@
 #include <QStatusBar>
 #include <QVBoxLayout>
 #include <QWidget>
+#include <string>
+#include <iostream>
+#include <regex>
+
 
 
 
@@ -35,6 +39,7 @@ private slots:
 	void mouseWheel();
 	void addRandomGraph();
 	void addRealtimeGraph();
+	void addCPUtempGraph();
 	void removeSelectedGraph();
 	void removeAllGraphs();
 	void contextMenuRequest(QPoint pos);

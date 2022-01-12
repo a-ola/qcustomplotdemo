@@ -54,7 +54,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes |
 				    QCP::iSelectLegend | QCP::iSelectPlottables);
 	customPlot->xAxis->setRange(-1, 8);
-	customPlot->yAxis->setRange(-5, 5);
+	customPlot->yAxis->setRange(-5, 100);
 	customPlot->axisRect()->setupFullAxesBox();
   
 	customPlot->plotLayout()->insertRow(0);
@@ -70,9 +70,10 @@ MainWindow::MainWindow(QWidget *parent) :
 	customPlot->legend->setSelectedFont(legendFont);
 	customPlot->legend->setSelectableParts(QCPLegend::spItems); // legend box shall not be selectable, only legend items
 
-	addRealtimeGraph();
-	addRandomGraph();
-	addRandomGraph();
+	// addRealtimeGraph();
+	addCPUtempGraph();
+	// addRandomGraph();
+	// addRandomGraph();
   
 	// connect slot that ties some axis selections together (especially opposite axes):
 	connect(customPlot, SIGNAL(selectionChangedByUser()), this, SLOT(selectionChanged()));
@@ -228,6 +229,25 @@ void MainWindow::addRealtimeGraph() {
 	startTimer(40);
 }
 
+void MainWindow::addCPUtempGraph() {
+	customPlot->addGraph();
+	customPlot->graph()->setName(QString("CPU temp"));
+	animdata.reset(new QCPDataContainer<QCPGraphData>);
+	
+	//Data to display goes here
+	for(int i=0;i<nRealtimePoints;i++) {
+		QCPGraphData data(i*dt,0);
+		animdata->add(data);
+	}
+	customPlot->graph()->setData(animdata);
+	QPen graphPen;
+	graphPen.setColor(QColor(rand()%245+10, rand()%245+10, rand()%245+10));
+	graphPen.setWidthF(2);
+	customPlot->graph()->setPen(graphPen);
+	customPlot->replot();
+	startTimer(40);
+}
+
 void MainWindow::addRealtimeSample(double v) {
 	// shift the values
 	for (auto i = animdata->end(); i != (animdata->begin()); --i) {
@@ -237,10 +257,50 @@ void MainWindow::addRealtimeSample(double v) {
 	animdata->begin()->value = v;
 }
 
+//Gets a float in the pattern digit-digit-dot-digit from input.
+//Won't work on 1 or 3 digit temps, but I am not made out of time.
+
+float GetFloatCMD(std::string cmd) {
+
+  std::string data;
+  FILE * stream;
+  const int max_buffer = 256;
+  char buffer[max_buffer];
+  cmd.append(" 2>&1");
+
+  stream = popen(cmd.c_str(), "r");
+
+  if (stream) {
+    while (!feof(stream))
+      if (fgets(buffer, max_buffer, stream) != NULL) data.append(buffer);
+    pclose(stream);
+  }
+
+    // regex for ??.? 
+    std::regex regexp("[[:digit:]][[:digit:]](\\.)[[:digit:]]"); 
+   
+    // flag type for determining the matching behavior
+     std::smatch m; 
+   
+    // regex_search that searches pattern regexp in the string mystr  
+    regex_search(data,m,regexp); 
+
+    int x;
+  
+    for (auto x : m)
+	  return std::stof(x);
+
+return 0;
+}
+
 void MainWindow::timerEvent( QTimerEvent * ) {
+
+	int out = 3.5;
+//	std::cout << GetFloatCMD("sensors");
+
 	// demonstrates that adding a few samples before plotting speeds things up
 	for(int i = 0; i < 5; i++) {
-		addRealtimeSample(sin(t*5));
+		addRealtimeSample(GetFloatCMD("sensors"));
 		t = t + dt;
 	}
 	customPlot->replot();
